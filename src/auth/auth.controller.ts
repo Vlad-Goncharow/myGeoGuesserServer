@@ -1,4 +1,15 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Render,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common'
 import { Response } from 'express'
 import { AuthService } from './auth.service'
 import { RegisterDto } from './dto/create-auth.dto'
@@ -27,6 +38,15 @@ export class AuthController {
     })
 
     return res.json(data)
+  }
+
+  @Render('confirmEmail')
+  @Get('/confirm/:userId')
+  async confirmEmail(@Param('userId', ParseIntPipe) userId: number) {
+    const data = await this.authService.confirmEmail(userId)
+    return {
+      success: data.success,
+    }
   }
 
   @Post('/login')

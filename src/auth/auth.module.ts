@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller'
 import { PrismaService } from 'src/prisma.service'
 import { JwtModule } from '@nestjs/jwt'
 import { RefreshTokensModule } from 'src/refresh-tokens/refresh-tokens.module'
+import { MailModule } from 'src/mail/mail.module'
 
 @Module({
   controllers: [AuthController],
@@ -16,6 +17,7 @@ import { RefreshTokensModule } from 'src/refresh-tokens/refresh-tokens.module'
       },
     }),
     RefreshTokensModule,
+    MailModule,
   ],
   exports: [AuthService, JwtModule],
 })

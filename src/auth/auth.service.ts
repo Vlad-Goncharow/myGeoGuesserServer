@@ -6,10 +6,12 @@ import { PrismaService } from 'src/prisma.service'
 import { RefreshTokensService } from 'src/refresh-tokens/refresh-tokens.service'
 import { RegisterDto } from './dto/create-auth.dto'
 import { LoginDto } from './dto/login-dto.dto'
+import { MailService } from 'src/mail/mail.service'
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly mailService: MailService,
     private prisma: PrismaService,
     private refreshTokenService: RefreshTokensService,
     private jwtService: JwtService
@@ -48,6 +50,7 @@ export class AuthService {
     const generateRefreshToken = await this.refreshTokenService.generateRefreshToken(createUser)
 
     const { token } = await this.refreshTokenService.saveToken(createUser.id, generateRefreshToken)
+    await this.mailService.sendMail(createUser)
 
     return {
       user: createUser,
@@ -122,6 +125,13 @@ export class AuthService {
 
   async logout(userId: number) {
     return await this.refreshTokenService.deleteToken(userId)
+  }
+
+  async confirmEmail(userId: number) {
+    const data = await this.mailService.verifyMail(userId)
+    return {
+      success: data.success,
+    }
   }
 
   private generateToken(user: User) {

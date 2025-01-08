@@ -3,6 +3,7 @@ import { AppModule } from './app.module'
 import { config } from 'dotenv'
 import * as cookieParser from 'cookie-parser'
 import { NestExpressApplication } from '@nestjs/platform-express'
+import * as path from 'path'
 config()
 
 async function bootstrap() {
@@ -15,6 +16,9 @@ async function bootstrap() {
       credentials: true,
     },
   })
+
+  app.setViewEngine('ejs')
+  app.setBaseViewsDir(path.join(__dirname, '..', 'src', 'templates'))
 
   app.use(cookieParser())
   await app.listen(PORT, () => console.log(`server start on port ${PORT}`))

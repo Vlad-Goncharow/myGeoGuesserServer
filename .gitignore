@@ -2,6 +2,10 @@
 /dist
 /node_modules
 /build
+/uploads/avatars/*
+/uploads/habs
+/uploads/publications
+!/uploads/avatars/user_alt.png
 /prisma/migrations
 
 # Logs
