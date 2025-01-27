@@ -6,6 +6,7 @@ import { MailModule } from './mail/mail.module'
 import * as path from 'path'
 import { MailerModule } from '@nestjs-modules/mailer'
 import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter'
+import { LobbyGateway } from './lobbyGateway'
 
 @Module({
   imports: [
@@ -38,5 +39,6 @@ import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter'
     RefreshTokensModule,
     MailModule,
   ],
+  providers: [LobbyGateway],
 })
 export class AppModule {}

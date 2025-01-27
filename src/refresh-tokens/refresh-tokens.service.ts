@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaService } from 'src/prisma.service'
-import { User } from '@prisma/client'
+import { GenerateToken } from 'src/types/auth'
 
 @Injectable()
 export class RefreshTokensService {
@@ -10,15 +10,13 @@ export class RefreshTokensService {
     private jwtService: JwtService
   ) {}
 
-  // Генерация нового рефреш-токена
-  async generateRefreshToken(user: User) {
+  async generateRefreshToken(user: GenerateToken) {
     const payload = { email: user.email, id: user.id }
     const refresh = this.jwtService.sign(payload)
 
     return refresh
   }
 
-  // Сохранение или обновление рефреш-токена в базе данных
   async saveToken(userId: number, token: string) {
     const existingToken = await this.prisma.refreshToken.findFirst({
       where: { userId },
@@ -39,7 +37,6 @@ export class RefreshTokensService {
     return refreshToken
   }
 
-  // Удаление рефреш-токена из базы данных
   async deleteToken(userId: number) {
     const token = await this.prisma.refreshToken.findFirst({
       where: { userId },
@@ -58,7 +55,6 @@ export class RefreshTokensService {
     }
   }
 
-  // Валидация рефреш-токена
   async validateToken(refreshToken: string) {
     try {
       const userData = this.jwtService.verify(refreshToken)
@@ -69,7 +65,6 @@ export class RefreshTokensService {
     }
   }
 
-  // Поиск токена в базе данных по строке токена
   async findTokenFromDb(refreshToken: string) {
     const token = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },

@@ -4,6 +4,7 @@ import { config } from 'dotenv'
 import * as cookieParser from 'cookie-parser'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import * as path from 'path'
+import { WsAdapter } from '@nestjs/platform-ws'
 config()
 
 async function bootstrap() {
@@ -16,6 +17,8 @@ async function bootstrap() {
       credentials: true,
     },
   })
+
+  app.useWebSocketAdapter(new WsAdapter(app))
 
   app.setViewEngine('ejs')
   app.setBaseViewsDir(path.join(__dirname, '..', 'src', 'templates'))

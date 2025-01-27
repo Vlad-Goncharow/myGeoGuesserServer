@@ -1,12 +1,12 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { User } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from 'src/prisma.service'
 import { RefreshTokensService } from 'src/refresh-tokens/refresh-tokens.service'
 import { RegisterDto } from './dto/create-auth.dto'
 import { LoginDto } from './dto/login-dto.dto'
 import { MailService } from 'src/mail/mail.service'
+import { GenerateToken } from 'src/types/auth'
 
 @Injectable()
 export class AuthService {
@@ -46,14 +46,21 @@ export class AuthService {
       },
     })
 
-    const accessToken = await this.generateToken(createUser)
-    const generateRefreshToken = await this.refreshTokenService.generateRefreshToken(createUser)
+    const userWithoutPassword = { ...createUser }
+    delete userWithoutPassword.password
 
-    const { token } = await this.refreshTokenService.saveToken(createUser.id, generateRefreshToken)
-    await this.mailService.sendMail(createUser)
+    const accessToken = await this.generateToken(userWithoutPassword)
+    const generateRefreshToken =
+      await this.refreshTokenService.generateRefreshToken(userWithoutPassword)
+
+    const { token } = await this.refreshTokenService.saveToken(
+      userWithoutPassword.id,
+      generateRefreshToken
+    )
+    await this.mailService.sendMail(userWithoutPassword)
 
     return {
-      user: createUser,
+      user: userWithoutPassword,
       accessToken,
       refreshToken: token,
     }
@@ -81,13 +88,20 @@ export class AuthService {
       )
     }
 
-    const accessToken = await this.generateToken(findUser)
-    const generateRefreshToken = await this.refreshTokenService.generateRefreshToken(findUser)
+    const userWithoutPassword = { ...findUser }
+    delete userWithoutPassword.password
 
-    const { token } = await this.refreshTokenService.saveToken(findUser.id, generateRefreshToken)
+    const accessToken = await this.generateToken(userWithoutPassword)
+    const generateRefreshToken =
+      await this.refreshTokenService.generateRefreshToken(userWithoutPassword)
+
+    const { token } = await this.refreshTokenService.saveToken(
+      userWithoutPassword.id,
+      generateRefreshToken
+    )
 
     return {
-      user: findUser,
+      user: userWithoutPassword,
       accessToken,
       refreshToken: token,
     }
@@ -108,16 +122,24 @@ export class AuthService {
     const findUser = await this.prisma.user.findUnique({
       where: { id: userData.id },
     })
+
     if (!findUser) {
       throw new UnauthorizedException()
     }
 
-    const accessToken = await this.generateToken(findUser)
-    const generateRefreshToken = await this.refreshTokenService.generateRefreshToken(findUser)
-    const { token } = await this.refreshTokenService.saveToken(findUser.id, generateRefreshToken)
+    const userWithoutPassword = { ...findUser }
+    delete userWithoutPassword.password
+
+    const accessToken = await this.generateToken(userWithoutPassword)
+    const generateRefreshToken =
+      await this.refreshTokenService.generateRefreshToken(userWithoutPassword)
+    const { token } = await this.refreshTokenService.saveToken(
+      userWithoutPassword.id,
+      generateRefreshToken
+    )
 
     return {
-      user: findUser,
+      user: userWithoutPassword,
       accessToken,
       refreshToken: token,
     }
@@ -134,7 +156,7 @@ export class AuthService {
     }
   }
 
-  private generateToken(user: User) {
+  private generateToken(user: GenerateToken) {
     const payload = { email: user.email, id: user.id }
 
     const access = this.jwtService.sign(payload)
