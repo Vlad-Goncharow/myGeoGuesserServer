@@ -13,7 +13,6 @@ interface Room {
   id: string
   admin: number
   clients: Map<WebSocket, User>
-  rounds: number
   isGameStarted: boolean
   isGameEnded: boolean
   roundsPlayed: number
@@ -21,6 +20,10 @@ interface Room {
   targetCoordinates: Map<number, { coordinates: { lat: number; lng: number } }>
   settings: {
     maxPlayers: number
+    gameMode: string
+    gameDiffcult: string
+    roundTime: number
+    rounds: number
   }
   guesses: { userId: number; round: number; coordinates: { lat: number; lng: number } }[]
 }
@@ -84,9 +87,6 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
         case 'createRoom':
           this.createRoom(client, data.admin)
           break
-        case 'changeGameRounds':
-          this.changeGameRounds(client, data.payload)
-          break
         case 'startGame':
           this.startGame(client, data.payload)
           break
@@ -121,12 +121,15 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const defaultSettings = {
       maxPlayers: 5,
+      gameMode: 'Pinpointing',
+      gameDiffcult: 'Standard Pinpointing',
+      roundTime: 180,
+      rounds: 5,
     }
 
     this.rooms.set(roomId, {
       id: roomId,
       admin,
-      rounds: 5,
       clients: new Map(),
       settings: defaultSettings,
       isGameStarted: false,
@@ -212,24 +215,6 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
         payload: users,
       })
     )
-  }
-
-  changeGameRounds(client: WebSocket, data: { roomId: string; rounds: number }) {
-    const room = this.rooms.get(data.roomId)
-
-    if (!room) {
-      client.send(JSON.stringify({ event: 'error', message: 'Room not found' }))
-      return
-    }
-
-    room.rounds = data.rounds
-
-    this.broadcastToRoom(data.roomId, {
-      event: 'roundsUpdate',
-      payload: {
-        rounds: room.rounds,
-      },
-    })
   }
 
   startGame(client: WebSocket, data: { roomId: string }) {
