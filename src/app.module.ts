@@ -7,6 +7,8 @@ import * as path from 'path'
 import { MailerModule } from '@nestjs-modules/mailer'
 import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter'
 import { LobbyGateway } from './lobbyGateway'
+import { UsersModule } from './users/users.module'
+import { FilesModule } from './files/files.module'
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { LobbyGateway } from './lobbyGateway'
     AuthModule,
     RefreshTokensModule,
     MailModule,
+    UsersModule,
+    FilesModule,
   ],
   providers: [LobbyGateway],
 })

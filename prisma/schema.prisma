@@ -12,7 +12,8 @@ model User {
   email String  @unique
   password String
   nickname    String
-  avatar  String @default("/user_alt.png")
+  avatar  String @default("/avatars/user_alt.png")
+  patch  String @default("/patchs/default.jpg")
   playedGames  Int  @default(0)
   isActive Boolean @default(false)
   RefreshToken RefreshToken[]

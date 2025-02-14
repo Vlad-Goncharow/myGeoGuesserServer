@@ -15,13 +15,7 @@ import { AuthService } from './auth.service'
 import { RegisterDto } from './dto/create-auth.dto'
 import { LoginDto } from './dto/login-dto.dto'
 import { JwtAuthGuard } from './jwt-auth.guard'
-import { User } from '@prisma/client'
-
-export interface CustomRequest extends Request {
-  cookies: Record<string, string>
-  user: User
-}
-
+import { CustomRequest } from 'src/types/auth'
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

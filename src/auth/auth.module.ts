@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
 import { PrismaService } from 'src/prisma.service'
 import { JwtModule } from '@nestjs/jwt'
 import { RefreshTokensModule } from 'src/refresh-tokens/refresh-tokens.module'
 import { MailModule } from 'src/mail/mail.module'
+import { UsersModule } from 'src/users/users.module'
 
 @Module({
   controllers: [AuthController],
@@ -18,6 +19,7 @@ import { MailModule } from 'src/mail/mail.module'
     }),
     RefreshTokensModule,
     MailModule,
+    forwardRef(() => UsersModule),
   ],
   exports: [AuthService, JwtModule],
 })
