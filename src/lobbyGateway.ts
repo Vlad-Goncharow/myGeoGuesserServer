@@ -26,6 +26,14 @@ interface Room {
     rounds: number
   }
   guesses: { userId: number; round: number; coordinates: { lat: number; lng: number } }[]
+  targetCountries: Map<number, { country: string; code: string }>
+  selectedCountries: {
+    userId: number
+    round: number
+    country: string
+    time: number | null
+    code: string
+  }[]
 }
 
 @WebSocketGateway(4000, { cors: { origin: '*' } })
@@ -96,11 +104,23 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
         case 'finishGuess':
           this.finishGuess(client, data.payload)
           break
+        case 'addCountryGuess':
+          this.addCountryGuess(client, data.payload)
+          break
+        case 'endCountryModeRound':
+          this.endCountryModeRound(data.payload)
+          break
         case 'startNewRound':
           this.startNewRound(client, data.payload)
           break
         case 'setTargetCords':
           this.setTargetCoordinates(client, data.payload)
+          break
+        case 'setTargetCountry':
+          this.setTargetCountry(client, data.payload)
+          break
+        case 'endCountyModeGame':
+          this.endCountyModeGame(client, data.payload)
           break
         case 'userLeave':
           this.userLeave(client, data.payload)
@@ -137,7 +157,9 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
       roundsPlayed: 0,
       guessComplited: 0,
       targetCoordinates: new Map(),
+      targetCountries: new Map(),
       guesses: [],
+      selectedCountries: [],
     })
 
     client.send(JSON.stringify({ event: 'roomCreated', payload: { roomId, admin } }))
@@ -324,6 +346,114 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  addCountryGuess(
+    client: WebSocket,
+    data: {
+      roomId: string
+      round: number
+      userId: number
+      country: string
+      time: number | null
+      code: string
+    }
+  ) {
+    const room = this.rooms.get(data.roomId)
+
+    if (!room) {
+      client.send(JSON.stringify({ event: 'error', message: 'Room not found' }))
+      return
+    }
+
+    if (data.country === room.targetCountries.get(data.round).country) {
+      room.guessComplited = room.guessComplited + 1
+    }
+
+    room.selectedCountries.push({
+      userId: data.userId,
+      round: data.round,
+      country: data.country,
+      time: data.time,
+      code: data.code,
+    })
+
+    this.broadcastToRoom(data.roomId, {
+      event: 'addedCountryGuess',
+      payload: {
+        selectedCountries: room.selectedCountries.filter((el) => el.round === data.round),
+      },
+    })
+    this.checkRoundEnd(data.roomId, data.round)
+  }
+  checkRoundEnd(roomId: string, round: number) {
+    const room = this.rooms.get(roomId)
+    if (!room) return
+
+    const maxGuesses = 3
+    let inactivePlayers = 0
+    const totalPlayers = room.clients.size
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    room.clients.forEach((user, _) => {
+      const userGuesses = room.selectedCountries.filter(
+        (guess) => guess.userId === user.id && guess.round === round
+      )
+
+      const hasGuessedCorrectly = userGuesses.some(
+        (guess) =>
+          guess.country === room.targetCountries.get(round)?.country &&
+          guess.code === room.targetCountries.get(round)?.code
+      )
+
+      const hasNoAttemptsLeft = userGuesses.length >= maxGuesses
+
+      if (hasGuessedCorrectly || hasNoAttemptsLeft) {
+        inactivePlayers++
+      }
+    })
+
+    if (inactivePlayers === totalPlayers) {
+      this.endCountryModeRound({ roomId, round })
+    }
+  }
+
+  endCountryModeRound(data: { roomId: string; round: number }) {
+    const room = this.rooms.get(data.roomId)
+    if (!room) return
+
+    this.broadcastToRoom(data.roomId, {
+      event: 'endCountryModeRound',
+      payload: {
+        roundsPlayed: data.round,
+        selectedCountries: room.selectedCountries.filter((el) => el.round === data.round),
+      },
+    })
+
+    room.guessComplited = 0
+  }
+  endCountyModeGame(client: WebSocket, data: { roomId: string }) {
+    const room = this.rooms.get(data.roomId)
+
+    if (!room) {
+      client.send(JSON.stringify({ event: 'error', message: 'Room not found' }))
+      return
+    }
+
+    const targetCountries = Array.from(room.targetCountries.entries()).map(([round, value]) => ({
+      round,
+      ...value,
+    }))
+
+    this.broadcastToRoom(data.roomId, {
+      event: 'endedCountryModeGame',
+      payload: {
+        targetCountries,
+        selectedCountries: room.selectedCountries,
+      },
+    })
+
+    room.guessComplited = 0
+  }
+
   startNewRound(client: WebSocket, data: { roomId: string }) {
     const room = this.rooms.get(data.roomId)
 
@@ -357,6 +487,33 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
       payload: {
         targetCoordinates: room.targetCoordinates.get(data.round).coordinates,
       },
+    })
+  }
+
+  setTargetCountry(
+    client: WebSocket,
+    data: { roomId: string; country: string; round: number; code: string }
+  ) {
+    const room = this.rooms.get(data.roomId)
+
+    if (!room) {
+      client.send(JSON.stringify({ event: 'error', message: 'Room not found' }))
+      return
+    }
+
+    room.targetCountries.set(data.round, {
+      country: data.country,
+      code: data.code,
+    })
+
+    this.broadcastToRoom(data.roomId, {
+      event: 'setedTargetCountry',
+      payload: {
+        targetCountries: { ...room.targetCountries.get(data.round), round: data.round },
+      },
+    })
+    this.broadcastToRoom(data.roomId, {
+      event: 'startedNewRound',
     })
   }
 
@@ -409,6 +566,8 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
     room.isGameStarted = false
     room.roundsPlayed = 0
     room.targetCoordinates = new Map()
+    room.targetCountries = new Map()
+    room.selectedCountries = []
 
     return room
   }
