@@ -122,6 +122,9 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
         case 'endCountyModeGame':
           this.endCountyModeGame(client, data.payload)
           break
+        case 'endPoinpointingModeRound':
+          this.endPoinpointingModeRound(client, data.payload)
+          break
         case 'userLeave':
           this.userLeave(client, data.payload)
           break
@@ -333,17 +336,27 @@ export class LobbyGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (room.guessComplited === room.clients.size) {
-      room.roundsPlayed = room.roundsPlayed + 1
-      room.guessComplited = 0
-
-      this.broadcastToRoom(data.roomId, {
-        event: 'allPlayersFinished',
-        payload: {
-          roundsPlayed: room.roundsPlayed,
-          guesses: room.guesses.filter((el) => el.round === data.round),
-        },
-      })
+      this.endPoinpointingModeRound(client, { roomId: data.roomId, round: data.round })
     }
+  }
+  endPoinpointingModeRound(client: WebSocket, data: { roomId: string; round: number }) {
+    const room = this.rooms.get(data.roomId)
+
+    if (!room) {
+      client.send(JSON.stringify({ event: 'error', message: 'Room not found' }))
+      return
+    }
+
+    room.roundsPlayed = room.roundsPlayed + 1
+    room.guessComplited = 0
+
+    this.broadcastToRoom(data.roomId, {
+      event: 'endedPoinpointingModeRound',
+      payload: {
+        roundsPlayed: room.roundsPlayed,
+        guesses: room.guesses.filter((el) => el.round === data.round),
+      },
+    })
   }
 
   addCountryGuess(
