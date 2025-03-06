@@ -1,5 +1,5 @@
 import { Room } from 'src/game/types/game'
-import { CountryModeGuessPayload, CountryModeTargetPayload } from './CountryModeTypes'
+import { CountryModeGuessPayload, CountryModeTargetPayload } from './types/CountryModeTypes'
 
 export class CountryMode {
   setTarget(room: Room, data: CountryModeTargetPayload): void {

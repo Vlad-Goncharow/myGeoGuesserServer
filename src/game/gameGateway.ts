@@ -16,7 +16,10 @@ import {
   TargetPayload,
   UpdataSettingsPayload,
 } from './types/game'
-import { CountryGuessPayload, CountryTargetPayload } from './mods/CountryMode/CountryModeTypes'
+import {
+  CountryGuessPayload,
+  CountryTargetPayload,
+} from './mods/CountryMode/types/CountryModeTypes'
 import {
   PinpointingGuessPayload,
   PinpointingTargetPayload,
@@ -97,7 +100,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         room.countryMode.guesses = room.countryMode.guesses.filter(
           (guess) => guess.userId !== user.id
         )
-        room.poinpointingMode.guesses = room.poinpointingMode.guesses.filter(
+        room.pinpointingMode.guesses = room.pinpointingMode.guesses.filter(
           (guess) => guess.userId !== user.id
         )
 
@@ -145,7 +148,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         guesses: [],
         targets: new Map(),
       },
-      poinpointingMode: {
+      pinpointingMode: {
         guesses: [],
         targets: new Map(),
       },
@@ -291,7 +294,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           },
         })
 
-        const roundGuesses = room.poinpointingMode.guesses.filter((el) => el.round === data.round)
+        const roundGuesses = room.pinpointingMode.guesses.filter((el) => el.round === data.round)
         if (roundGuesses.length === room.gameState.players.size) {
           this.endRound(client, { roomId: data.roomId, round: data.round })
         }
@@ -328,10 +331,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     switch (room.settings.gameMode) {
       case 'Pinpointing':
         this.broadcastToRoom(room, {
-          event: 'endedPoinpointingModeRound',
+          event: 'endedPinpointingModeRound',
           payload: {
             roundsPlayed: room.gameState.roundsPlayed,
-            guesses: room.poinpointingMode.guesses.filter((el) => el.round === data.round),
+            guesses: room.pinpointingMode.guesses.filter((el) => el.round === data.round),
           },
         })
 
@@ -391,7 +394,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           event: 'gameEnded',
           payload: {
             targets: targetCoordinates,
-            guesses: room.poinpointingMode.guesses,
+            guesses: room.pinpointingMode.guesses,
           },
         })
 
@@ -444,8 +447,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     room.countryMode.guesses = []
     room.countryMode.targets = new Map()
-    room.poinpointingMode.guesses = []
-    room.poinpointingMode.targets = new Map()
+    room.pinpointingMode.guesses = []
+    room.pinpointingMode.targets = new Map()
 
     return room
   }

@@ -1,5 +1,8 @@
 import { User } from '@prisma/client'
-import { CountryGuessPayload, CountryTargetPayload } from '../mods/CountryMode/CountryModeTypes'
+import {
+  CountryGuessPayload,
+  CountryTargetPayload,
+} from '../mods/CountryMode/types/CountryModeTypes'
 import {
   PinpointingGuessPayload,
   PinpointingTargetPayload,
@@ -28,7 +31,7 @@ export interface Room {
       code: string
     }[]
   }
-  poinpointingMode: {
+  pinpointingMode: {
     targets: Map<number, { coordinates: { lat: number; lng: number } }>
     guesses: {
       userId: number

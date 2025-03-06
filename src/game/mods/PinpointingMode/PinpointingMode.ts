@@ -6,14 +6,14 @@ import {
 
 export class PinpointingMode {
   setTarget(room: Room, data: PinpointingModeTargetPayload): void {
-    room.poinpointingMode.targets.set(data.round, {
+    room.pinpointingMode.targets.set(data.round, {
       coordinates: room.gameState.targetCoordinates.get(data.round).coordinates,
     })
   }
 
   handleGuess(room: Room, data: PinpointingModeGuessPayload): string {
     if (data.type === 'finishGuess') {
-      room.poinpointingMode.guesses.push({
+      room.pinpointingMode.guesses.push({
         userId: data.userId,
         round: data.round,
         coordinates: data.coordinates,
@@ -23,7 +23,7 @@ export class PinpointingMode {
     }
 
     if (data.type === 'unFinishGuess') {
-      room.poinpointingMode.guesses = room.poinpointingMode.guesses.filter(
+      room.pinpointingMode.guesses = room.pinpointingMode.guesses.filter(
         (guess) => !(guess.userId === data.userId && guess.round === data.round)
       )
 
@@ -32,7 +32,7 @@ export class PinpointingMode {
   }
 
   endGame(room: Room) {
-    return Array.from(room.poinpointingMode.targets.entries()).map(([round, value]) => ({
+    return Array.from(room.pinpointingMode.targets.entries()).map(([round, value]) => ({
       round,
       ...value,
     }))
