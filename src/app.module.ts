@@ -6,9 +6,9 @@ import { MailModule } from './mail/mail.module'
 import * as path from 'path'
 import { MailerModule } from '@nestjs-modules/mailer'
 import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter'
-import { LobbyGateway } from './lobbyGateway'
 import { UsersModule } from './users/users.module'
 import { FilesModule } from './files/files.module'
+import { GameGateway } from './game/gameGateway'
 
 @Module({
   imports: [
@@ -43,6 +43,6 @@ import { FilesModule } from './files/files.module'
     UsersModule,
     FilesModule,
   ],
-  providers: [LobbyGateway],
+  providers: [GameGateway],
 })
 export class AppModule {}
