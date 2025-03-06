@@ -271,7 +271,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleGuess(client: WebSocket, data: GuessPayload) {
-    const room = this.findRoom(client, data.roomId);
+    const room = this.findRoom(client, data.roomId)
 
     switch (room.settings.gameMode) {
       case 'Pinpointing':
