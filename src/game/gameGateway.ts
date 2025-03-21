@@ -10,6 +10,7 @@ import { Server, WebSocket } from 'ws'
 import { CountryMode } from './mods/CountryMode/CountryMode'
 import { PinpointingMode } from './mods/PinpointingMode/PinpointingMode'
 import {
+  GameType,
   GuessPayload,
   Room,
   SetTargetCordsType,
@@ -49,7 +50,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           this.updateSettings(client, data.payload)
           break
         case 'createRoom':
-          this.createRoom(client, data.admin)
+          this.createRoom(client, data.payload)
           break
         case 'startGame':
           this.startGame(client, data.payload)
@@ -120,7 +121,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     })
   }
 
-  createRoom(client: WebSocket, admin: number) {
+  createRoom(client: WebSocket, data: { admin: number; type: GameType }) {
     const roomId = uuid4()
 
     const defaultSettings = {
@@ -134,7 +135,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.rooms.set(roomId, {
       gameState: {
         id: roomId,
-        adminId: admin,
+        adminId: data.admin,
         players: new Map(),
         targetCoordinates: new Map(),
         isGameStarted: false,
@@ -154,7 +155,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     })
 
-    client.send(JSON.stringify({ event: 'roomCreated', payload: { roomId, admin } }))
+    client.send(
+      JSON.stringify({ event: `${data.type}-created`, payload: { roomId, admin: data.admin } })
+    )
   }
 
   joinRoom(client: WebSocket, data: { roomId: string; user: User }) {

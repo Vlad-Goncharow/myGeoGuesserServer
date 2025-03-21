@@ -48,6 +48,8 @@ interface SettingsTypes {
   maxPlayers: number
 }
 
+export type GameType = 'online-lobby' | 'quick-match'
+
 export interface Coordinates {
   lat: number
   lng: number
