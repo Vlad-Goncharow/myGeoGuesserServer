@@ -55,6 +55,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         case 'startGame':
           this.startGame(client, data.payload)
           break
+        case 'updateRoundTimeElapsed':
+          this.updateRoundTimeElapsed(client, data.payload)
+          break
         case 'endGame':
           this.endGame(client, data.payload)
           break
@@ -143,6 +146,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         isRoundStarted: false,
         isRoundEnded: false,
         roundsPlayed: 0,
+        roundTimeElapsed: 0,
       },
       settings: defaultSettings,
       countryMode: {
@@ -225,6 +229,29 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     })
   }
 
+  updateRoundTimeElapsed(client: WebSocket, data: { roomId: string }) {
+    const room = this.findRoom(client, data.roomId)
+
+    const updatetime = () => {
+      room.gameState.roundTimeElapsed = room.gameState.roundTimeElapsed + 1
+
+      this.broadcastToRoom(room, {
+        event: 'updatedRoundTimeElapsed',
+        payload: {
+          roundTimeElapsed: room.gameState.roundTimeElapsed,
+        },
+      })
+
+      if (room.gameState.roundTimeElapsed >= room.settings.roundTime) {
+        this.endRound(client, { round: room.gameState.roundsPlayed + 1, roomId: data.roomId })
+      }
+    }
+
+    room.timer = setInterval(() => {
+      updatetime()
+    }, 1000)
+  }
+
   setTargetCoordinates(client: WebSocket, data: SetTargetCordsType) {
     const room = this.findRoom(client, data.roomId)
 
@@ -238,6 +265,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         targetCoordinates: room.gameState.targetCoordinates.get(data.round).coordinates,
       },
     })
+
+    this.updateRoundTimeElapsed(client, { roomId: data.roomId })
   }
 
   setTarget(client: WebSocket, data: TargetPayload) {
@@ -330,6 +359,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = this.findRoom(client, data.roomId)
 
     room.gameState.roundsPlayed = room.gameState.roundsPlayed + 1
+    room.gameState.roundTimeElapsed = 0
 
     switch (room.settings.gameMode) {
       case 'Pinpointing':
@@ -353,6 +383,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         break
     }
+    clearInterval(room.timer)
   }
 
   checkCountriesGuesses(client: WebSocket, data: { roomId: string; round: number }) {

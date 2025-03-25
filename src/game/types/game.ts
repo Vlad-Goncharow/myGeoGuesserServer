@@ -9,6 +9,7 @@ import {
 } from '../mods/PinpointingMode/types/PinpointingModeTypes'
 
 export interface Room {
+  timer?: NodeJS.Timeout
   gameState: {
     id: string
     adminId: number
@@ -19,6 +20,7 @@ export interface Room {
     roundsPlayed: number
     players: Map<WebSocket, User>
     targetCoordinates: Map<number, { coordinates: Coordinates }>
+    roundTimeElapsed: number
   }
   settings: SettingsTypes
   countryMode: {
