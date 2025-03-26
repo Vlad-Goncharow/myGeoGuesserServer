@@ -168,7 +168,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = this.findRoom(client, data.roomId)
 
     if (room.gameState.players.size >= room.settings.maxPlayers) {
-      client.send(JSON.stringify({ event: 'error', message: 'Room is full' }))
+      client.send(JSON.stringify({ event: 'RoomIsFull' }))
       return
     }
 
