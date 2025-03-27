@@ -55,9 +55,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         case 'startGame':
           this.startGame(client, data.payload)
           break
-        case 'updateRoundTimeElapsed':
-          this.updateRoundTimeElapsed(client, data.payload)
-          break
         case 'endGame':
           this.endGame(client, data.payload)
           break
@@ -177,20 +174,35 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       ? room.gameState.targetCoordinates.get(room.gameState.roundsPlayed + 1).coordinates
       : []
 
+    const findCountryTarget = room.gameState.isGameStarted
+      ? room.countryMode.targets.get(room.gameState.roundsPlayed + 1)
+      : {}
+
     this.broadcastToRoom(room, {
       event: 'newUserJoined',
       payload: {
         message: 'A new user joined',
         users: Array.from(room.gameState.players.values()),
         user: data.user,
-        ...room,
         gameState: {
           ...room.gameState,
-          targetCoordinates: findTargetCords,
         },
-        settings: room.settings,
       },
     })
+
+    client.send(
+      JSON.stringify({
+        event: 'connected',
+        payload: {
+          targetCoordinates: findTargetCords,
+          targetCountry: findCountryTarget,
+          settings: room.settings,
+          gameState: {
+            ...room.gameState,
+          },
+        },
+      })
+    )
   }
 
   updateSettings(client: WebSocket, data: UpdataSettingsPayload) {
@@ -446,6 +458,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         break
     }
+    clearInterval(room.timer)
   }
 
   backToRoom(client: WebSocket, data: { roomId: string }) {
@@ -483,7 +496,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     room.countryMode.targets = new Map()
     room.pinpointingMode.guesses = []
     room.pinpointingMode.targets = new Map()
-
+    clearInterval(room.timer)
     return room
   }
 
